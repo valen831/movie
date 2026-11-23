@@ -109,7 +109,7 @@ fun NetworkImage(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(DarkSurfaceVariant),
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         CircularProgressIndicator(
@@ -133,7 +133,7 @@ fun NetworkImage(
                     Box(
                         modifier = Modifier
                             .fillMaxSize()
-                            .background(DarkSurfaceVariant),
+                            .background(MaterialTheme.colorScheme.surfaceVariant),
                         contentAlignment = Alignment.Center
                     ) {
                         // Display placeholder or fallback box
