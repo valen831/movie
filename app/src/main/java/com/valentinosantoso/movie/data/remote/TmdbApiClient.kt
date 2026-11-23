@@ -1,9 +1,12 @@
 package com.valentinosantoso.movie.data.remote
 
 import com.valentinosantoso.movie.data.model.Cast
+import com.valentinosantoso.movie.data.model.CreditsData
+import com.valentinosantoso.movie.data.model.CrewDirector
 import com.valentinosantoso.movie.data.model.Genre
 import com.valentinosantoso.movie.data.model.Movie
 import com.valentinosantoso.movie.data.model.MovieDetail
+import com.valentinosantoso.movie.data.model.VideoTrailer
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.json.JSONArray
@@ -79,6 +82,7 @@ object TmdbApiClient {
                 voteAverage = json.optDouble("vote_average", 0.0),
                 voteCount = json.optInt("vote_count", 0),
                 status = json.optString("status"),
+                originalLanguage = json.optString("original_language", "en"),
                 genres = genresList
             )
             Result.success(detail)
@@ -87,25 +91,83 @@ object TmdbApiClient {
         }
     }
 
-    suspend fun getMovieCredits(movieId: Int): Result<List<Cast>> = withContext(Dispatchers.IO) {
+    suspend fun getMovieVideos(movieId: Int): Result<List<VideoTrailer>> = withContext(Dispatchers.IO) {
+        try {
+            val responseString = executeGetRequest("$BASE_URL/movie/$movieId/videos?api_key=$API_KEY")
+            val json = JSONObject(responseString)
+            val results = json.optJSONArray("results") ?: JSONArray()
+            val list = mutableListOf<VideoTrailer>()
+
+            for (i in 0 until results.length()) {
+                val item = results.getJSONObject(i)
+                val site = item.optString("site")
+                val key = item.optString("key")
+                if (site.equals("YouTube", ignoreCase = true) && key.isNotBlank()) {
+                    val isOfficial = item.optBoolean("official", false)
+                    val type = item.optString("type")
+                    list.add(
+                        VideoTrailer(
+                            id = item.optString("id"),
+                            key = key,
+                            name = item.optString("name"),
+                            site = site,
+                            type = type,
+                            isOfficial = isOfficial
+                        )
+                    )
+                }
+            }
+
+            // Sort: Official Trailers first, then Trailers, then other videos
+            list.sortWith(
+                compareByDescending<VideoTrailer> { it.type.equals("Trailer", ignoreCase = true) }
+                    .thenByDescending { it.isOfficial }
+            )
+
+            Result.success(list)
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    suspend fun getMovieCredits(movieId: Int): Result<CreditsData> = withContext(Dispatchers.IO) {
         try {
             val responseString = executeGetRequest("$BASE_URL/movie/$movieId/credits?api_key=$API_KEY")
             val json = JSONObject(responseString)
-            val castArray = json.optJSONArray("cast") ?: JSONArray()
-            val list = mutableListOf<Cast>()
 
-            for (i in 0 until minOf(castArray.length(), 20)) {
+            // Extract Cast
+            val castArray = json.optJSONArray("cast") ?: JSONArray()
+            val castList = mutableListOf<Cast>()
+            for (i in 0 until minOf(castArray.length(), 25)) {
                 val castObj = castArray.getJSONObject(i)
-                list.add(
+                castList.add(
                     Cast(
                         id = castObj.optInt("id"),
                         name = castObj.optString("name"),
                         character = castObj.optString("character"),
-                        profilePath = castObj.optString("profile_path").takeIf { it.isNotEmpty() && it != "null" }
+                        profilePath = castObj.optString("profile_path").takeIf { it.isNotEmpty() && it != "null" },
+                        order = castObj.optInt("order", i)
                     )
                 )
             }
-            Result.success(list)
+
+            // Extract Director from Crew
+            val crewArray = json.optJSONArray("crew") ?: JSONArray()
+            var director: CrewDirector? = null
+            for (i in 0 until crewArray.length()) {
+                val crewObj = crewArray.getJSONObject(i)
+                val job = crewObj.optString("job")
+                if (job.equals("Director", ignoreCase = true)) {
+                    director = CrewDirector(
+                        id = crewObj.optInt("id"),
+                        name = crewObj.optString("name"),
+                        profilePath = crewObj.optString("profile_path").takeIf { it.isNotEmpty() && it != "null" }
+                    )
+                    break
+                }
+            }
+
+            Result.success(CreditsData(cast = castList, director = director))
         } catch (e: Exception) {
             Result.failure(e)
         }
