@@ -22,43 +22,45 @@ object TmdbApiClient {
     const val API_KEY = "0e3ae1697e705a18185e58411565578e"
     private const val BASE_URL = "https://api.themoviedb.org/3"
 
-    suspend fun getTrendingMovies(page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/trending/movie/day?api_key=$API_KEY&page=$page")
+    var currentLanguage: String = "id-ID"
+
+    suspend fun getTrendingMovies(page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/trending/movie/day?api_key=$API_KEY&language=$language&page=$page")
     }
 
-    suspend fun getNowPlayingMovies(page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/movie/now_playing?api_key=$API_KEY&page=$page")
+    suspend fun getNowPlayingMovies(page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/movie/now_playing?api_key=$API_KEY&language=$language&page=$page")
     }
 
-    suspend fun getPopularMovies(page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/movie/popular?api_key=$API_KEY&page=$page")
+    suspend fun getPopularMovies(page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/movie/popular?api_key=$API_KEY&language=$language&page=$page")
     }
 
-    suspend fun getTopRatedMovies(page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/movie/top_rated?api_key=$API_KEY&page=$page")
+    suspend fun getTopRatedMovies(page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/movie/top_rated?api_key=$API_KEY&language=$language&page=$page")
     }
 
-    suspend fun getUpcomingMovies(page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/movie/upcoming?api_key=$API_KEY&page=$page")
+    suspend fun getUpcomingMovies(page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/movie/upcoming?api_key=$API_KEY&language=$language&page=$page")
     }
 
-    suspend fun searchMovies(query: String, page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
+    suspend fun searchMovies(query: String, page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
         if (query.isBlank()) return@withContext Result.success(emptyList())
         val encodedQuery = URLEncoder.encode(query, "UTF-8")
-        fetchMovieList("$BASE_URL/search/movie?api_key=$API_KEY&query=$encodedQuery&page=$page")
+        fetchMovieList("$BASE_URL/search/movie?api_key=$API_KEY&language=$language&query=$encodedQuery&page=$page")
     }
 
-    suspend fun getMoviesByGenre(genreId: Int, page: Int = 1): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/discover/movie?api_key=$API_KEY&with_genres=$genreId&page=$page")
+    suspend fun getMoviesByGenre(genreId: Int, page: Int = 1, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/discover/movie?api_key=$API_KEY&language=$language&with_genres=$genreId&page=$page")
     }
 
-    suspend fun getSimilarMovies(movieId: Int): Result<List<Movie>> = withContext(Dispatchers.IO) {
-        fetchMovieList("$BASE_URL/movie/$movieId/similar?api_key=$API_KEY")
+    suspend fun getSimilarMovies(movieId: Int, language: String = currentLanguage): Result<List<Movie>> = withContext(Dispatchers.IO) {
+        fetchMovieList("$BASE_URL/movie/$movieId/similar?api_key=$API_KEY&language=$language")
     }
 
-    suspend fun getMovieDetails(movieId: Int): Result<MovieDetail> = withContext(Dispatchers.IO) {
+    suspend fun getMovieDetails(movieId: Int, language: String = currentLanguage): Result<MovieDetail> = withContext(Dispatchers.IO) {
         try {
-            val responseString = executeGetRequest("$BASE_URL/movie/$movieId?api_key=$API_KEY")
+            val responseString = executeGetRequest("$BASE_URL/movie/$movieId?api_key=$API_KEY&language=$language")
             val json = JSONObject(responseString)
 
             val genresList = mutableListOf<Genre>()
