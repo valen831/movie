@@ -1,5 +1,6 @@
 package com.valentinosantoso.movie.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -23,23 +24,21 @@ import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.valentinosantoso.movie.R
 import com.valentinosantoso.movie.data.model.Movie
 import com.valentinosantoso.movie.ui.components.MovieCard
-import com.valentinosantoso.movie.ui.theme.DarkBackground
-import com.valentinosantoso.movie.ui.theme.DarkSurfaceVariant
 import com.valentinosantoso.movie.ui.theme.PrimaryRed
-import com.valentinosantoso.movie.ui.theme.TextMuted
-import com.valentinosantoso.movie.ui.theme.TextPrimary
-import com.valentinosantoso.movie.ui.theme.TextSecondary
 
 @Composable
 fun FavoritesScreen(
@@ -49,10 +48,13 @@ fun FavoritesScreen(
     onExploreClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         // Screen Header
         Row(
@@ -69,15 +71,15 @@ fun FavoritesScreen(
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
-                text = "Film Favorit Saya",
-                color = TextPrimary,
+                text = stringResource(R.string.favorites_title),
+                color = MaterialTheme.colorScheme.onBackground,
                 fontSize = 20.sp,
                 fontWeight = FontWeight.Bold
             )
             Spacer(modifier = Modifier.weight(1f))
             Text(
-                text = "${favorites.size} Film",
-                color = TextMuted,
+                text = stringResource(R.string.count_movies, favorites.size),
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
                 fontSize = 12.sp
             )
         }
@@ -94,7 +96,7 @@ fun FavoritesScreen(
                 Box(
                     modifier = Modifier
                         .size(80.dp)
-                        .background(DarkSurfaceVariant, CircleShape),
+                        .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
                     Icon(
@@ -106,15 +108,15 @@ fun FavoritesScreen(
                 }
                 Spacer(modifier = Modifier.height(16.dp))
                 Text(
-                    text = "Belum Ada Film Favorit",
-                    color = TextPrimary,
+                    text = stringResource(R.string.favorites_empty_title),
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Text(
-                    text = "Simpan film yang ingin Anda tonton nanti dengan menekan tombol hati ❤️ pada film.",
-                    color = TextMuted,
+                    text = stringResource(R.string.favorites_empty_desc),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 13.sp,
                     textAlign = TextAlign.Center,
                     lineHeight = 18.sp
@@ -125,12 +127,12 @@ fun FavoritesScreen(
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
                     shape = RoundedCornerShape(10.dp)
                 ) {
-                    Text(text = "Mulai Jelajah Film", fontWeight = FontWeight.SemiBold)
+                    Text(text = stringResource(R.string.explore_button), fontWeight = FontWeight.SemiBold)
                 }
             }
         } else {
             LazyVerticalGrid(
-                columns = GridCells.Fixed(2),
+                columns = if (isLandscape) GridCells.Fixed(4) else GridCells.Fixed(2),
                 contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -142,7 +144,7 @@ fun FavoritesScreen(
                         isFavorite = true,
                         onMovieClick = onMovieClick,
                         onFavoriteToggle = onFavoriteToggle,
-                        cardWidth = 160
+                        cardWidth = if (isLandscape) 150 else 160
                     )
                 }
             }
