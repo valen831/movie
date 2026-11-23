@@ -58,8 +58,9 @@ fun MovieCard(
             .width(cardWidth.dp)
             .clickable { onMovieClick(movie) },
         shape = RoundedCornerShape(12.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column {
             // Poster Image with Overlay Badges
@@ -125,7 +126,7 @@ fun MovieCard(
             Column(modifier = Modifier.padding(8.dp)) {
                 Text(
                     text = movie.title,
-                    color = TextPrimary,
+                    color = MaterialTheme.colorScheme.onSurface,
                     fontSize = 13.sp,
                     fontWeight = FontWeight.SemiBold,
                     maxLines = 1,
@@ -134,7 +135,7 @@ fun MovieCard(
                 Spacer(modifier = Modifier.height(2.dp))
                 Text(
                     text = if (movie.releaseYear.isNotEmpty()) movie.releaseYear else "Film",
-                    color = TextMuted,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 11.sp
                 )
             }
