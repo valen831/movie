@@ -1,6 +1,5 @@
 package com.valentinosantoso.movie.ui.screens
 
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
 import android.widget.Toast
@@ -8,7 +7,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,11 +20,11 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -41,16 +39,12 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -108,11 +102,6 @@ fun DetailScreen(
     var similarMovies by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var isLoading by remember { mutableStateOf(true) }
     var errorMessage by remember { mutableStateOf<String?>(null) }
-
-    // TIX ID cinema schedule mock state
-    var selectedCinemaIndex by remember { mutableIntStateOf(0) }
-    val cinemaList = listOf("XXI Cinema", "CGV Cinemas", "Cinépolis")
-    val showTimes = listOf("12:15", "14:40", "17:05", "19:30", "21:55")
 
     val openTrailer: (VideoTrailer) -> Unit = { trailer ->
         try {
@@ -387,7 +376,7 @@ fun DetailScreen(
 
                                 Spacer(modifier = Modifier.height(8.dp))
 
-                                // TIX ID Specs Row: Age Rating, Duration, Release Year
+                                // Age Rating, Duration, Release Year
                                 Row(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
@@ -434,33 +423,6 @@ fun DetailScreen(
                                         )
                                     }
                                 }
-                            }
-                        }
-                    }
-                }
-
-                // Cinema Badges (XXI, CGV, Cinepolis, IMAX) - TIX ID Feature
-                item {
-                    Spacer(modifier = Modifier.height(14.dp))
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        listOf("XXI", "CGV", "Cinépolis", "IMAX 2D").forEach { cinema ->
-                            Box(
-                                modifier = Modifier
-                                    .background(DarkSurface, RoundedCornerShape(6.dp))
-                                    .border(1.dp, Color(0xFF2C3246), RoundedCornerShape(6.dp))
-                                    .padding(horizontal = 10.dp, vertical = 4.dp)
-                            ) {
-                                Text(
-                                    text = cinema,
-                                    color = Color(0xFFC0C7DC),
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
                             }
                         }
                     }
@@ -608,7 +570,7 @@ fun DetailScreen(
                     }
                 }
 
-                // Video & Trailer Gallery (TIX ID Feature)
+                // Video & Trailer Gallery
                 if (trailers.isNotEmpty()) {
                     item {
                         Spacer(modifier = Modifier.height(22.dp))
@@ -757,7 +719,7 @@ fun DetailScreen(
                                 contentPadding = PaddingValues(horizontal = 16.dp),
                                 horizontalArrangement = Arrangement.spacedBy(16.dp)
                             ) {
-                                // Director Card First (TIX ID style)
+                                // Director Card First
                                 if (director != null) {
                                     item {
                                         Column(
@@ -860,106 +822,6 @@ fun DetailScreen(
                     }
                 }
 
-                // TIX ID Bioskop Schedule Simulation
-                item {
-                    Spacer(modifier = Modifier.height(24.dp))
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(horizontal = 16.dp),
-                        shape = RoundedCornerShape(12.dp),
-                        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-                        border = androidx.compose.foundation.BorderStroke(1.dp, Color(0xFF2C3246))
-                    ) {
-                        Column(modifier = Modifier.padding(14.dp)) {
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Text(
-                                    text = "Jadwal Bioskop",
-                                    color = TextPrimary,
-                                    fontSize = 15.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                                Spacer(modifier = Modifier.weight(1f))
-                                Text(
-                                    text = "Hari Ini",
-                                    color = PrimaryRed,
-                                    fontSize = 12.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(10.dp))
-
-                            // Cinema Selector Chips
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                cinemaList.forEachIndexed { index, cinema ->
-                                    val isSelected = selectedCinemaIndex == index
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .clip(RoundedCornerShape(8.dp))
-                                            .background(if (isSelected) PrimaryRed else DarkSurfaceVariant)
-                                            .clickable { selectedCinemaIndex = index }
-                                            .padding(vertical = 8.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = cinema,
-                                            color = if (isSelected) Color.White else TextSecondary,
-                                            fontSize = 11.sp,
-                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium
-                                        )
-                                    }
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // Showtimes
-                            Text(
-                                text = "Reguler 2D • Rp 45.000",
-                                color = TextMuted,
-                                fontSize = 11.sp
-                            )
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                            ) {
-                                showTimes.forEach { time ->
-                                    Box(
-                                        modifier = Modifier
-                                            .weight(1f)
-                                            .border(1.dp, Color(0xFF3880FF).copy(alpha = 0.5f), RoundedCornerShape(6.dp))
-                                            .background(DarkSurfaceVariant)
-                                            .clickable {
-                                                Toast.makeText(
-                                                    context,
-                                                    "Jadwal dipilih: ${cinemaList[selectedCinemaIndex]} jam $time",
-                                                    Toast.LENGTH_SHORT
-                                                ).show()
-                                            }
-                                            .padding(vertical = 6.dp),
-                                        contentAlignment = Alignment.Center
-                                    ) {
-                                        Text(
-                                            text = time,
-                                            color = Color.White,
-                                            fontSize = 12.sp,
-                                            fontWeight = FontWeight.Bold
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-
                 // Similar Movies
                 if (similarMovies.isNotEmpty()) {
                     item {
@@ -997,7 +859,8 @@ fun DetailScreen(
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp, vertical = 28.dp),
+                .statusBarsPadding()
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
