@@ -575,7 +575,7 @@ fun DetailScreen(
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (movieDetail.overview.isNotBlank()) movieDetail.overview else "Tidak ada ringkasan sinopsis.",
+                            text = if (movieDetail.overview.isNotBlank()) movieDetail.overview else stringResource(R.string.no_synopsis),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp,
                             lineHeight = 21.sp
