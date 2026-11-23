@@ -53,8 +53,9 @@ fun MovieBackdropCard(
             .height(210.dp)
             .clickable { onMovieClick(movie) },
         shape = RoundedCornerShape(16.dp),
-        colors = CardDefaults.cardColors(containerColor = DarkSurface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 6.dp)
+        colors = CardDefaults.cardColors(containerColor = androidx.compose.material3.MaterialTheme.colorScheme.surface),
+        border = androidx.compose.foundation.BorderStroke(1.dp, androidx.compose.material3.MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
     ) {
         Box(modifier = Modifier.fillMaxSize()) {
             // Backdrop Image (or fallback to poster)
