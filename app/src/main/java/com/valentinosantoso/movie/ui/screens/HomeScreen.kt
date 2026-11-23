@@ -53,10 +53,10 @@ fun HomeScreen(
     isFavorite: (Int) -> Boolean,
     isDarkTheme: Boolean,
     currentLanguage: String,
-    onToggleTheme: () -> Unit,
     onToggleLanguage: () -> Unit,
     onMovieClick: (Movie) -> Unit,
     onFavoriteToggle: (Movie) -> Unit,
+    onToggleTheme: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     var trendingMovies by remember { mutableStateOf<List<Movie>>(emptyList()) }
@@ -200,42 +200,20 @@ fun HomeScreen(
                             )
                         }
 
-                        // Right side controls: Language switcher + Theme switcher
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        // Right side control: Multi-Language Toggle (🇮🇩 ID / 🇬🇧 EN)
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant)
+                                .clickable { onToggleLanguage() }
+                                .padding(horizontal = 12.dp, vertical = 7.dp)
                         ) {
-                            // Multi-Language Toggle (🇮🇩 ID / 🇬🇧 EN)
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { onToggleLanguage() }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = if (currentLanguage == "en") "🇬🇧 EN" else "🇮🇩 ID",
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
-
-                            // Dark / Light Theme Toggle (☀️ Terang / 🌙 Gelap)
-                            Box(
-                                modifier = Modifier
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .clickable { onToggleTheme() }
-                                    .padding(horizontal = 10.dp, vertical = 6.dp)
-                            ) {
-                                Text(
-                                    text = if (isDarkTheme) stringResource(R.string.theme_light) else stringResource(R.string.theme_dark),
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 11.sp,
-                                    fontWeight = FontWeight.Bold
-                                )
-                            }
+                            Text(
+                                text = if (currentLanguage == "en") "🇬🇧 EN" else "🇮🇩 ID",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                fontSize = 12.sp,
+                                fontWeight = FontWeight.Bold
+                            )
                         }
                     }
                 }
