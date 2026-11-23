@@ -9,6 +9,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.Crossfade
 import androidx.compose.foundation.background
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -27,8 +28,6 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import com.valentinosantoso.movie.data.local.FavoriteManager
 import com.valentinosantoso.movie.data.local.LanguageManager
-import com.valentinosantoso.movie.data.local.ThemeManager
-import com.valentinosantoso.movie.data.local.ThemeMode
 import com.valentinosantoso.movie.data.model.Movie
 import com.valentinosantoso.movie.data.remote.TmdbApiClient
 import com.valentinosantoso.movie.ui.components.AppTab
@@ -42,18 +41,16 @@ import com.valentinosantoso.movie.ui.theme.MovieTheme
 class MainActivity : ComponentActivity() {
 
     private lateinit var favoriteManager: FavoriteManager
-    private lateinit var themeManager: ThemeManager
     private lateinit var languageManager: LanguageManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         favoriteManager = FavoriteManager(applicationContext)
-        themeManager = ThemeManager(applicationContext)
         languageManager = LanguageManager(applicationContext)
 
         setContent {
-            val themeMode by themeManager.themeModeFlow.collectAsState()
+            val isDark = isSystemInDarkTheme()
             val currentLang by languageManager.languageFlow.collectAsState()
 
             // Update TMDB API language
@@ -67,12 +64,11 @@ class MainActivity : ComponentActivity() {
             }
 
             CompositionLocalProvider(LocalConfiguration provides localizedConfig) {
-                MovieTheme(themeMode = themeMode) {
+                MovieTheme(darkTheme = isDark) {
                     MovieApp(
                         favoriteManager = favoriteManager,
-                        themeManager = themeManager,
                         languageManager = languageManager,
-                        themeMode = themeMode,
+                        isDarkTheme = isDark,
                         currentLang = currentLang
                     )
                 }
@@ -84,9 +80,8 @@ class MainActivity : ComponentActivity() {
 @Composable
 fun MovieApp(
     favoriteManager: FavoriteManager,
-    themeManager: ThemeManager,
     languageManager: LanguageManager,
-    themeMode: ThemeMode,
+    isDarkTheme: Boolean,
     currentLang: String
 ) {
     val context = LocalContext.current
@@ -171,9 +166,8 @@ fun MovieApp(
                             AppTab.HOME -> {
                                 HomeScreen(
                                     isFavorite = isFavorite,
-                                    isDarkTheme = themeMode == ThemeMode.DARK,
+                                    isDarkTheme = isDarkTheme,
                                     currentLanguage = currentLang,
-                                    onToggleTheme = { themeManager.toggleTheme() },
                                     onToggleLanguage = { languageManager.toggleLanguage() },
                                     onMovieClick = { movie ->
                                         selectedMovieId = movie.id
