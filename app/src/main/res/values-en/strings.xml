@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">CinemaFlix</string>
+    <string name="app_name">Cinema_Flix</string>
     <string name="app_subtitle">Complete Movie Catalog (TMDB)</string>
     <string name="tab_home">Home</string>
     <string name="tab_search">Search</string>

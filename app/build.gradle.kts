@@ -3,6 +3,10 @@ plugins {
     alias(libs.plugins.kotlin.compose)
 }
 
+base {
+    archivesName.set("Cinema_Flix")
+}
+
 android {
     namespace = "com.valentinosantoso.movie"
     compileSdk {

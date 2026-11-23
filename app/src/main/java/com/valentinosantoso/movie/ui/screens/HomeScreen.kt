@@ -179,7 +179,7 @@ fun HomeScreen(
                         Column {
                             Row(verticalAlignment = Alignment.CenterVertically) {
                                 Text(
-                                    text = "CINEMA",
+                                    text = "CINEMA_",
                                     color = PrimaryRed,
                                     fontSize = 22.sp,
                                     fontWeight = FontWeight.Black,
