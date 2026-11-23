@@ -72,11 +72,43 @@ object TmdbApiClient {
                 }
             }
 
+            var overview = json.optString("overview")
+            var tagline = json.optString("tagline")
+
+            val isIndonesian = language.startsWith("id", ignoreCase = true)
+
+            // Smart Fallback & Translation for Indonesian:
+            // 1. If synopsis is empty on TMDB in Indonesian, fetch English and TRANSLATE to Indonesian!
+            if (overview.isBlank()) {
+                try {
+                    val enResponseString = executeGetRequest("$BASE_URL/movie/$movieId?api_key=$API_KEY&language=en-US")
+                    val enJson = JSONObject(enResponseString)
+                    val enOverview = enJson.optString("overview")
+                    if (enOverview.isNotBlank()) {
+                        overview = if (isIndonesian) translateToIndonesian(enOverview) else enOverview
+                    }
+                    if (tagline.isBlank()) {
+                        val enTagline = enJson.optString("tagline")
+                        if (enTagline.isNotBlank()) {
+                            tagline = if (isIndonesian) translateToIndonesian(enTagline) else enTagline
+                        }
+                    }
+                } catch (_: Exception) {
+                    // Fallback failure is non-fatal
+                }
+            } else if (isIndonesian && isLikelyEnglish(overview)) {
+                // 2. If synopsis from TMDB is in English despite Indonesian mode, translate to Indonesian!
+                overview = translateToIndonesian(overview)
+                if (tagline.isNotBlank() && isLikelyEnglish(tagline)) {
+                    tagline = translateToIndonesian(tagline)
+                }
+            }
+
             val detail = MovieDetail(
                 id = json.optInt("id"),
                 title = json.optString("title"),
-                tagline = json.optString("tagline"),
-                overview = json.optString("overview"),
+                tagline = tagline,
+                overview = overview,
                 posterPath = json.optString("poster_path").takeIf { it.isNotEmpty() && it != "null" },
                 backdropPath = json.optString("backdrop_path").takeIf { it.isNotEmpty() && it != "null" },
                 releaseDate = json.optString("release_date"),
@@ -233,6 +265,49 @@ object TmdbApiClient {
             }
         } finally {
             connection.disconnect()
+        }
+    }
+
+    private fun isLikelyEnglish(text: String): Boolean {
+        val lower = " " + text.lowercase() + " "
+        val enHits = listOf(" the ", " and ", " with ", " for ", " from ", " their ", " about ", " after ", " before ", " who ", " into ").count { lower.contains(it) }
+        val idHits = listOf(" yang ", " dan ", " di ", " dengan ", " dari ", " untuk ", " sebuah ", " mereka ", " saat ", " telah ").count { lower.contains(it) }
+        return enHits >= 2 && idHits == 0
+    }
+
+    private fun translateToIndonesian(text: String): String {
+        if (text.isBlank()) return text
+        return try {
+            val encodedQuery = URLEncoder.encode(text, "UTF-8")
+            val url = URL("https://translate.googleapis.com/translate_a/single?client=gtx&sl=en&tl=id&dt=t&q=$encodedQuery")
+            val connection = url.openConnection() as HttpURLConnection
+            connection.requestMethod = "GET"
+            connection.connectTimeout = 8000
+            connection.readTimeout = 8000
+            connection.setRequestProperty("User-Agent", "Mozilla/5.0 (Android; Mobile)")
+
+            if (connection.responseCode in 200..299) {
+                val responseString = connection.inputStream.bufferedReader().use { it.readText() }
+                val jsonArray = JSONArray(responseString)
+                val segments = jsonArray.optJSONArray(0)
+                if (segments != null) {
+                    val sb = StringBuilder()
+                    for (i in 0 until segments.length()) {
+                        val seg = segments.optJSONArray(i)
+                        if (seg != null && seg.length() > 0) {
+                            sb.append(seg.optString(0))
+                        }
+                    }
+                    val result = sb.toString().trim()
+                    if (result.isNotEmpty()) result else text
+                } else {
+                    text
+                }
+            } else {
+                text
+            }
+        } catch (_: Exception) {
+            text
         }
     }
 }
