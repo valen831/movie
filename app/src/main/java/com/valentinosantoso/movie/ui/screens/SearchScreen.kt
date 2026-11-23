@@ -1,5 +1,6 @@
 package com.valentinosantoso.movie.ui.screens
 
+import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
@@ -13,7 +14,6 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
@@ -30,11 +30,11 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -44,23 +44,20 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.valentinosantoso.movie.R
 import com.valentinosantoso.movie.data.model.Genre
 import com.valentinosantoso.movie.data.model.Movie
 import com.valentinosantoso.movie.data.remote.TmdbApiClient
 import com.valentinosantoso.movie.ui.components.MovieCard
-import com.valentinosantoso.movie.ui.theme.DarkBackground
-import com.valentinosantoso.movie.ui.theme.DarkSurface
-import com.valentinosantoso.movie.ui.theme.DarkSurfaceVariant
 import com.valentinosantoso.movie.ui.theme.PrimaryRed
-import com.valentinosantoso.movie.ui.theme.TextMuted
-import com.valentinosantoso.movie.ui.theme.TextPrimary
-import com.valentinosantoso.movie.ui.theme.TextSecondary
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
@@ -90,6 +87,9 @@ fun SearchScreen(
     var searchResults by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
     var hasSearched by remember { mutableStateOf(false) }
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
 
     val scope = rememberCoroutineScope()
     val focusManager = LocalFocusManager.current
@@ -122,7 +122,7 @@ fun SearchScreen(
     Column(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
             .padding(top = 16.dp)
     ) {
         // Search Input Bar
@@ -142,8 +142,8 @@ fun SearchScreen(
                 .padding(horizontal = 16.dp),
             placeholder = {
                 Text(
-                    text = "Cari judul film...",
-                    color = TextMuted,
+                    text = stringResource(R.string.search_placeholder),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
             },
@@ -151,7 +151,7 @@ fun SearchScreen(
                 Icon(
                     imageVector = Icons.Default.Search,
                     contentDescription = null,
-                    tint = TextSecondary
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             },
             trailingIcon = {
@@ -164,7 +164,7 @@ fun SearchScreen(
                         Icon(
                             imageVector = Icons.Default.Close,
                             contentDescription = "Hapus",
-                            tint = TextSecondary
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
@@ -172,12 +172,12 @@ fun SearchScreen(
             singleLine = true,
             shape = RoundedCornerShape(12.dp),
             colors = OutlinedTextFieldDefaults.colors(
-                focusedContainerColor = DarkSurface,
-                unfocusedContainerColor = DarkSurface,
+                focusedContainerColor = MaterialTheme.colorScheme.surface,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
                 focusedBorderColor = PrimaryRed,
-                unfocusedBorderColor = Color.Transparent,
-                focusedTextColor = TextPrimary,
-                unfocusedTextColor = TextPrimary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
+                focusedTextColor = MaterialTheme.colorScheme.onSurface,
+                unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
                 cursorColor = PrimaryRed
             ),
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
@@ -222,8 +222,8 @@ fun SearchScreen(
                     },
                     shape = RoundedCornerShape(20.dp),
                     colors = FilterChipDefaults.filterChipColors(
-                        containerColor = DarkSurfaceVariant,
-                        labelColor = TextSecondary,
+                        containerColor = MaterialTheme.colorScheme.surfaceVariant,
+                        labelColor = MaterialTheme.colorScheme.onSurfaceVariant,
                         selectedContainerColor = PrimaryRed,
                         selectedLabelColor = Color.White
                     ),
@@ -255,15 +255,15 @@ fun SearchScreen(
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
-                        text = "Tidak Ada Hasil",
-                        color = TextPrimary,
+                        text = stringResource(R.string.no_results_title),
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Coba gunakan kata kunci lain atau pilih kategori genre di atas.",
-                        color = TextMuted,
+                        text = stringResource(R.string.no_results_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
                     )
@@ -278,35 +278,35 @@ fun SearchScreen(
                     Box(
                         modifier = Modifier
                             .size(70.dp)
-                            .background(DarkSurfaceVariant, CircleShape),
+                            .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
                         Icon(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
-                            tint = TextSecondary,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             modifier = Modifier.size(36.dp)
                         )
                     }
                     Spacer(modifier = Modifier.height(16.dp))
                     Text(
-                        text = "Temukan Film Favoritmu",
-                        color = TextPrimary,
+                        text = stringResource(R.string.search_empty_title),
+                        color = MaterialTheme.colorScheme.onBackground,
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
                     Spacer(modifier = Modifier.height(6.dp))
                     Text(
-                        text = "Ketik judul film di kolom pencarian atau pilih genre untuk mulai menjelajah.",
-                        color = TextMuted,
+                        text = stringResource(R.string.search_empty_desc),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp,
                         textAlign = TextAlign.Center
                     )
                 }
             } else {
                 LazyVerticalGrid(
-                    columns = GridCells.Fixed(2),
-                    contentPadding = PaddingValues(bottom = 24.dp),
+                    columns = if (isLandscape) GridCells.Fixed(4) else GridCells.Fixed(2),
+                    contentPadding = PaddingValues(bottom = 32.dp),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
@@ -316,7 +316,7 @@ fun SearchScreen(
                             isFavorite = isFavorite(movie.id),
                             onMovieClick = onMovieClick,
                             onFavoriteToggle = onFavoriteToggle,
-                            cardWidth = 160
+                            cardWidth = if (isLandscape) 150 else 160
                         )
                     }
                 }
