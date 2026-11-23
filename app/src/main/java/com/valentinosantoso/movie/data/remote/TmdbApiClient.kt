@@ -139,11 +139,12 @@ object TmdbApiClient {
                 if (site.equals("YouTube", ignoreCase = true) && key.isNotBlank()) {
                     val isOfficial = item.optBoolean("official", false)
                     val type = item.optString("type")
+                    val name = item.optString("name")
                     list.add(
                         VideoTrailer(
                             id = item.optString("id"),
                             key = key,
-                            name = item.optString("name"),
+                            name = name,
                             site = site,
                             type = type,
                             isOfficial = isOfficial
@@ -152,13 +153,52 @@ object TmdbApiClient {
                 }
             }
 
-            // Sort: Official Trailers first, then Trailers, then other videos
-            list.sortWith(
-                compareByDescending<VideoTrailer> { it.type.equals("Trailer", ignoreCase = true) }
-                    .thenByDescending { it.isOfficial }
+            // FILTER: Hanya ambil video & trailer yang RESMI (Official Only)
+            val hasOfficialVideos = list.any { it.isOfficial }
+            val officialOnlyList = if (hasOfficialVideos) {
+                list.filter { it.isOfficial }
+            } else {
+                list
+            }
+
+            // 1. Ambil Trailer resmi (abaikan fan edit, konsep, atau parodi)
+            val cleanTrailers = officialOnlyList.filter { video ->
+                val lowerName = video.name.lowercase()
+                val isNotFan = !lowerName.contains("fan edit") &&
+                               !lowerName.contains("fan-made") &&
+                               !lowerName.contains("fan made") &&
+                               !lowerName.contains("concept") &&
+                               !lowerName.contains("parody")
+                video.type.equals("Trailer", ignoreCase = true) && isNotFan
+            }
+
+            // 2. Jika tidak ada tipe Trailer resmi, ambil Teaser resmi
+            val finalList = if (cleanTrailers.isNotEmpty()) {
+                cleanTrailers
+            } else {
+                val cleanTeasers = officialOnlyList.filter { video ->
+                    val lowerName = video.name.lowercase()
+                    val isNotFan = !lowerName.contains("fan edit") &&
+                                   !lowerName.contains("fan-made") &&
+                                   !lowerName.contains("fan made") &&
+                                   !lowerName.contains("concept")
+                    (video.type.equals("Teaser", ignoreCase = true) || video.type.equals("Trailer", ignoreCase = true)) && isNotFan
+                }
+                if (cleanTeasers.isNotEmpty()) cleanTeasers else officialOnlyList
+            }
+
+            // Urutkan trailer utama ("Official Trailer") paling depan
+            val sortedList = finalList.sortedWith(
+                compareByDescending<VideoTrailer> {
+                    val name = it.name.lowercase()
+                    name == "official trailer" || name == "main trailer"
+                }.thenByDescending {
+                    val name = it.name.lowercase()
+                    name.contains("official trailer") || name.contains("final trailer")
+                }.thenByDescending { it.type.equals("Trailer", ignoreCase = true) }
             )
 
-            Result.success(list)
+            Result.success(sortedList)
         } catch (e: Exception) {
             Result.failure(e)
         }
