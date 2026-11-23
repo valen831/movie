@@ -1,6 +1,7 @@
 package com.valentinosantoso.movie.ui.screens
 
 import android.content.Intent
+import android.content.res.Configuration
 import android.net.Uri
 import android.widget.Toast
 import androidx.activity.compose.BackHandler
@@ -41,6 +42,7 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -55,13 +57,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.valentinosantoso.movie.R
 import com.valentinosantoso.movie.data.model.Cast
 import com.valentinosantoso.movie.data.model.CrewDirector
 import com.valentinosantoso.movie.data.model.Movie
@@ -69,14 +74,8 @@ import com.valentinosantoso.movie.data.model.MovieDetail
 import com.valentinosantoso.movie.data.model.VideoTrailer
 import com.valentinosantoso.movie.data.remote.TmdbApiClient
 import com.valentinosantoso.movie.ui.components.MovieCard
-import com.valentinosantoso.movie.ui.theme.DarkBackground
-import com.valentinosantoso.movie.ui.theme.DarkSurface
-import com.valentinosantoso.movie.ui.theme.DarkSurfaceVariant
 import com.valentinosantoso.movie.ui.theme.PrimaryRed
 import com.valentinosantoso.movie.ui.theme.StarGold
-import com.valentinosantoso.movie.ui.theme.TextMuted
-import com.valentinosantoso.movie.ui.theme.TextPrimary
-import com.valentinosantoso.movie.ui.theme.TextSecondary
 import com.valentinosantoso.movie.util.NetworkImage
 import kotlinx.coroutines.launch
 
@@ -94,6 +93,12 @@ fun DetailScreen(
 
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
+
+    val configuration = LocalConfiguration.current
+    val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val backdropHeight = if (isLandscape) 200.dp else 270.dp
+    val posterWidth = if (isLandscape) 90.dp else 105.dp
+    val posterHeight = if (isLandscape) 135.dp else 155.dp
 
     var detail by remember { mutableStateOf<MovieDetail?>(null) }
     var castList by remember { mutableStateOf<List<Cast>>(emptyList()) }
@@ -157,7 +162,7 @@ fun DetailScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(DarkBackground)
+            .background(MaterialTheme.colorScheme.background)
     ) {
         if (isLoading) {
             Column(
@@ -167,7 +172,11 @@ fun DetailScreen(
             ) {
                 CircularProgressIndicator(color = PrimaryRed, strokeWidth = 3.dp)
                 Spacer(modifier = Modifier.height(16.dp))
-                Text(text = "Memuat film...", color = TextSecondary, fontSize = 14.sp)
+                Text(
+                    text = stringResource(R.string.loading),
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp
+                )
             }
         } else if (errorMessage != null && detail == null) {
             Column(
@@ -178,18 +187,22 @@ fun DetailScreen(
                 verticalArrangement = Arrangement.Center
             ) {
                 Text(
-                    text = "Gagal Memuat Detail Film",
-                    color = TextPrimary,
+                    text = stringResource(R.string.no_results_title),
+                    color = MaterialTheme.colorScheme.onBackground,
                     fontSize = 18.sp,
                     fontWeight = FontWeight.Bold
                 )
                 Spacer(modifier = Modifier.height(8.dp))
-                Text(text = errorMessage ?: "Terjadi kesalahan", color = TextMuted, fontSize = 13.sp)
+                Text(
+                    text = errorMessage ?: "Terjadi kesalahan",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 13.sp
+                )
                 Spacer(modifier = Modifier.height(16.dp))
                 Button(onClick = { loadDetail() }, colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed)) {
                     Icon(imageVector = Icons.Default.Refresh, contentDescription = null)
                     Spacer(modifier = Modifier.width(8.dp))
-                    Text(text = "Coba Lagi")
+                    Text(text = stringResource(R.string.retry_button))
                 }
             }
         } else if (detail != null) {
@@ -206,7 +219,7 @@ fun DetailScreen(
                     Box(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .height(270.dp)
+                            .height(backdropHeight)
                     ) {
                         NetworkImage(
                             url = movieDetail.fullBackdropUrl ?: movieDetail.fullPosterUrl,
@@ -235,15 +248,15 @@ fun DetailScreen(
                                     Brush.verticalGradient(
                                         colors = listOf(
                                             Color.Transparent,
-                                            DarkBackground.copy(alpha = 0.5f),
-                                            DarkBackground
+                                            MaterialTheme.colorScheme.background.copy(alpha = 0.5f),
+                                            MaterialTheme.colorScheme.background
                                         ),
-                                        startY = 100f
+                                        startY = 80f
                                     )
                                 )
                         )
 
-                        // Center Play Button for Trailer (TIX ID style)
+                        // Center Play Button for Trailer
                         if (primaryTrailer != null) {
                             Box(
                                 modifier = Modifier
@@ -255,7 +268,7 @@ fun DetailScreen(
                             ) {
                                 Icon(
                                     imageVector = Icons.Default.PlayArrow,
-                                    contentDescription = "Tonton Trailer",
+                                    contentDescription = stringResource(R.string.watch_trailer),
                                     tint = Color.White,
                                     modifier = Modifier.size(36.dp)
                                 )
@@ -281,7 +294,7 @@ fun DetailScreen(
                                         modifier = Modifier.size(14.dp)
                                     )
                                     Text(
-                                        text = "LIHAT TRAILER",
+                                        text = stringResource(R.string.watch_trailer).uppercase(),
                                         color = Color.White,
                                         fontSize = 11.sp,
                                         fontWeight = FontWeight.Bold
@@ -306,10 +319,10 @@ fun DetailScreen(
                             // Poster Card
                             Box(
                                 modifier = Modifier
-                                    .width(105.dp)
-                                    .height(155.dp)
+                                    .width(posterWidth)
+                                    .height(posterHeight)
                                     .clip(RoundedCornerShape(10.dp))
-                                    .border(1.dp, Color.White.copy(alpha = 0.15f), RoundedCornerShape(10.dp))
+                                    .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), RoundedCornerShape(10.dp))
                             ) {
                                 NetworkImage(
                                     url = movieDetail.fullPosterUrl,
@@ -325,7 +338,7 @@ fun DetailScreen(
                             Column(modifier = Modifier.weight(1f)) {
                                 Text(
                                     text = movieDetail.title,
-                                    color = TextPrimary,
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 20.sp,
                                     fontWeight = FontWeight.Bold,
                                     lineHeight = 25.sp
@@ -335,7 +348,7 @@ fun DetailScreen(
                                     Spacer(modifier = Modifier.height(2.dp))
                                     Text(
                                         text = "\"${movieDetail.tagline}\"",
-                                        color = TextMuted,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp,
                                         fontStyle = FontStyle.Italic,
                                         maxLines = 2,
@@ -358,18 +371,18 @@ fun DetailScreen(
                                     )
                                     Text(
                                         text = movieDetail.formattedRating,
-                                        color = Color.White,
+                                        color = MaterialTheme.colorScheme.onBackground,
                                         fontSize = 14.sp,
                                         fontWeight = FontWeight.Bold
                                     )
                                     Text(
                                         text = "/10",
-                                        color = TextMuted,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 11.sp
                                     )
                                     Text(
-                                        text = " (${movieDetail.voteCount} vote)",
-                                        color = TextMuted,
+                                        text = " (${movieDetail.voteCount})",
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 11.sp
                                     )
                                 }
@@ -381,7 +394,7 @@ fun DetailScreen(
                                     verticalAlignment = Alignment.CenterVertically,
                                     horizontalArrangement = Arrangement.spacedBy(6.dp)
                                 ) {
-                                    // Age Rating badge (e.g. 13+, 17+, SU)
+                                    // Age Rating badge
                                     Box(
                                         modifier = Modifier
                                             .border(1.dp, PrimaryRed, RoundedCornerShape(4.dp))
@@ -398,12 +411,12 @@ fun DetailScreen(
                                     // Duration
                                     Box(
                                         modifier = Modifier
-                                            .background(DarkSurfaceVariant, RoundedCornerShape(4.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = movieDetail.formattedRuntime,
-                                            color = TextSecondary,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -412,12 +425,12 @@ fun DetailScreen(
                                     // Year
                                     Box(
                                         modifier = Modifier
-                                            .background(DarkSurfaceVariant, RoundedCornerShape(4.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(4.dp))
                                             .padding(horizontal = 6.dp, vertical = 2.dp)
                                     ) {
                                         Text(
                                             text = movieDetail.releaseYear,
-                                            color = TextSecondary,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.Medium
                                         )
@@ -443,7 +456,7 @@ fun DetailScreen(
                                 if (primaryTrailer != null) {
                                     openTrailer(primaryTrailer)
                                 } else {
-                                    Toast.makeText(context, "Trailer belum tersedia untuk film ini", Toast.LENGTH_SHORT).show()
+                                    Toast.makeText(context, context.getString(R.string.toast_no_trailer), Toast.LENGTH_SHORT).show()
                                 }
                             },
                             colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
@@ -460,7 +473,7 @@ fun DetailScreen(
                             )
                             Spacer(modifier = Modifier.width(6.dp))
                             Text(
-                                text = "Tonton Trailer",
+                                text = stringResource(R.string.watch_trailer),
                                 color = Color.White,
                                 fontSize = 13.sp,
                                 fontWeight = FontWeight.Bold
@@ -471,7 +484,7 @@ fun DetailScreen(
                         Button(
                             onClick = { onFavoriteToggle(movieDetail.toMovie()) },
                             colors = ButtonDefaults.buttonColors(
-                                containerColor = if (isFav) PrimaryRed.copy(alpha = 0.25f) else DarkSurfaceVariant
+                                containerColor = if (isFav) PrimaryRed.copy(alpha = 0.15f) else MaterialTheme.colorScheme.surfaceVariant
                             ),
                             shape = RoundedCornerShape(10.dp),
                             modifier = Modifier
@@ -482,13 +495,13 @@ fun DetailScreen(
                             Icon(
                                 imageVector = Icons.Default.Favorite,
                                 contentDescription = null,
-                                tint = if (isFav) PrimaryRed else Color.White,
+                                tint = if (isFav) PrimaryRed else MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = if (isFav) "Favorit" else "+ Simpan",
-                                color = if (isFav) PrimaryRed else Color.White,
+                                text = if (isFav) stringResource(R.string.saved_favorite) else stringResource(R.string.save_favorite),
+                                color = if (isFav) PrimaryRed else MaterialTheme.colorScheme.onSurface,
                                 fontSize = 12.sp,
                                 fontWeight = FontWeight.Bold
                             )
@@ -505,16 +518,16 @@ fun DetailScreen(
                                     )
                                     type = "text/plain"
                                 }
-                                context.startActivity(Intent.createChooser(shareIntent, "Bagikan Film"))
+                                context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.share_movie)))
                             },
                             modifier = Modifier
                                 .size(46.dp)
-                                .background(DarkSurfaceVariant, RoundedCornerShape(10.dp))
+                                .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(10.dp))
                         ) {
                             Icon(
                                 imageVector = Icons.Default.Share,
-                                contentDescription = "Bagikan",
-                                tint = TextPrimary,
+                                contentDescription = stringResource(R.string.share_movie),
+                                tint = MaterialTheme.colorScheme.onSurface,
                                 modifier = Modifier.size(20.dp)
                             )
                         }
@@ -535,12 +548,12 @@ fun DetailScreen(
                             movieDetail.genres.forEach { genre ->
                                 Box(
                                     modifier = Modifier
-                                        .background(DarkSurfaceVariant, RoundedCornerShape(14.dp))
+                                        .background(MaterialTheme.colorScheme.surfaceVariant, RoundedCornerShape(14.dp))
                                         .padding(horizontal = 12.dp, vertical = 5.dp)
                                 ) {
                                     Text(
                                         text = genre.name,
-                                        color = TextSecondary,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                                         fontSize = 12.sp,
                                         fontWeight = FontWeight.Medium
                                     )
@@ -555,15 +568,15 @@ fun DetailScreen(
                     Spacer(modifier = Modifier.height(18.dp))
                     Column(modifier = Modifier.padding(horizontal = 16.dp)) {
                         Text(
-                            text = "Ringkasan Cerita",
-                            color = TextPrimary,
+                            text = stringResource(R.string.synopsis_title),
+                            color = MaterialTheme.colorScheme.onBackground,
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
                         Spacer(modifier = Modifier.height(6.dp))
                         Text(
-                            text = if (movieDetail.overview.isNotBlank()) movieDetail.overview else "Belum ada sinopsis tersedia untuk film ini.",
-                            color = TextSecondary,
+                            text = if (movieDetail.overview.isNotBlank()) movieDetail.overview else "Tidak ada ringkasan sinopsis.",
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
                             fontSize = 13.sp,
                             lineHeight = 21.sp
                         )
@@ -582,8 +595,8 @@ fun DetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Video & Trailer",
-                                    color = TextPrimary,
+                                    text = stringResource(R.string.trailers_title),
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
@@ -614,7 +627,8 @@ fun DetailScreen(
                                             .width(220.dp)
                                             .clickable { openTrailer(trailer) },
                                         shape = RoundedCornerShape(10.dp),
-                                        colors = CardDefaults.cardColors(containerColor = DarkSurface)
+                                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+                                        border = androidx.compose.foundation.BorderStroke(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f))
                                     ) {
                                         Column {
                                             // YouTube Thumbnail + Play button overlay
@@ -673,7 +687,7 @@ fun DetailScreen(
                                             // Video title
                                             Text(
                                                 text = trailer.name,
-                                                color = TextPrimary,
+                                                color = MaterialTheme.colorScheme.onSurface,
                                                 fontSize = 12.sp,
                                                 fontWeight = FontWeight.Medium,
                                                 maxLines = 2,
@@ -688,7 +702,7 @@ fun DetailScreen(
                     }
                 }
 
-                // Aktor & Sutradara (Pemeran & Kru ala TIX ID)
+                // Aktor & Sutradara
                 if (castList.isNotEmpty() || director != null) {
                     item {
                         Spacer(modifier = Modifier.height(24.dp))
@@ -700,15 +714,15 @@ fun DetailScreen(
                                 verticalAlignment = Alignment.CenterVertically
                             ) {
                                 Text(
-                                    text = "Aktor & Sutradara",
-                                    color = TextPrimary,
+                                    text = stringResource(R.string.cast_title),
+                                    color = MaterialTheme.colorScheme.onBackground,
                                     fontSize = 16.sp,
                                     fontWeight = FontWeight.Bold
                                 )
                                 Spacer(modifier = Modifier.weight(1f))
                                 Text(
-                                    text = "${castList.size + (if (director != null) 1 else 0)} Orang",
-                                    color = TextMuted,
+                                    text = stringResource(R.string.count_people, castList.size + (if (director != null) 1 else 0)),
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                                     fontSize = 12.sp
                                 )
                             }
@@ -731,7 +745,7 @@ fun DetailScreen(
                                                     .size(74.dp)
                                                     .clip(CircleShape)
                                                     .border(2.dp, StarGold, CircleShape)
-                                                    .background(DarkSurfaceVariant)
+                                                    .background(MaterialTheme.colorScheme.surfaceVariant)
                                             ) {
                                                 NetworkImage(
                                                     url = director!!.fullProfileUrl,
@@ -750,7 +764,7 @@ fun DetailScreen(
                                                     .padding(horizontal = 4.dp, vertical = 1.dp)
                                             ) {
                                                 Text(
-                                                    text = "SUTRADARA",
+                                                    text = stringResource(R.string.director_badge),
                                                     color = StarGold,
                                                     fontSize = 8.sp,
                                                     fontWeight = FontWeight.Bold
@@ -761,7 +775,7 @@ fun DetailScreen(
 
                                             Text(
                                                 text = director!!.name,
-                                                color = TextPrimary,
+                                                color = MaterialTheme.colorScheme.onBackground,
                                                 fontSize = 11.sp,
                                                 fontWeight = FontWeight.Bold,
                                                 maxLines = 1,
@@ -782,8 +796,8 @@ fun DetailScreen(
                                             modifier = Modifier
                                                 .size(74.dp)
                                                 .clip(CircleShape)
-                                                .border(1.dp, Color(0xFF2C3246), CircleShape)
-                                                .background(DarkSurfaceVariant)
+                                                .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.5f), CircleShape)
+                                                .background(MaterialTheme.colorScheme.surfaceVariant)
                                         ) {
                                             NetworkImage(
                                                 url = cast.fullProfileUrl,
@@ -797,7 +811,7 @@ fun DetailScreen(
 
                                         Text(
                                             text = cast.name,
-                                            color = TextPrimary,
+                                            color = MaterialTheme.colorScheme.onBackground,
                                             fontSize = 11.sp,
                                             fontWeight = FontWeight.SemiBold,
                                             maxLines = 1,
@@ -807,8 +821,8 @@ fun DetailScreen(
 
                                         if (cast.character.isNotBlank()) {
                                             Text(
-                                                text = "sebagai ${cast.character}",
-                                                color = TextMuted,
+                                                text = stringResource(R.string.as_character, cast.character),
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                                                 fontSize = 10.sp,
                                                 maxLines = 1,
                                                 overflow = TextOverflow.Ellipsis,
@@ -828,8 +842,8 @@ fun DetailScreen(
                         Spacer(modifier = Modifier.height(24.dp))
                         Column {
                             Text(
-                                text = "Film Rekomendasi Terkait",
-                                color = TextPrimary,
+                                text = stringResource(R.string.similar_movies),
+                                color = MaterialTheme.colorScheme.onBackground,
                                 fontSize = 16.sp,
                                 fontWeight = FontWeight.Bold,
                                 modifier = Modifier.padding(horizontal = 16.dp)
@@ -887,7 +901,7 @@ fun DetailScreen(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Favorite,
-                        contentDescription = "Favorit",
+                        contentDescription = stringResource(R.string.tab_favorites),
                         tint = if (isFav) PrimaryRed else Color.White
                     )
                 }
