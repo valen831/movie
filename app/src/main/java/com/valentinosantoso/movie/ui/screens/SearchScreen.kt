@@ -3,6 +3,7 @@ package com.valentinosantoso.movie.ui.screens
 import android.content.res.Configuration
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -35,6 +36,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.OutlinedTextFieldDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -80,13 +82,17 @@ fun SearchScreen(
     isFavorite: (Int) -> Boolean,
     onMovieClick: (Movie) -> Unit,
     onFavoriteToggle: (Movie) -> Unit,
+    query: String = "",
+    onQueryChange: (String) -> Unit = {},
+    selectedGenreId: Int = -1,
+    onGenreSelect: (Int) -> Unit = {},
+    searchResults: List<Movie> = emptyList(),
+    onSearchResultsChange: (List<Movie>) -> Unit = {},
+    hasSearched: Boolean = false,
+    onHasSearchedChange: (Boolean) -> Unit = {},
     modifier: Modifier = Modifier
 ) {
-    var query by remember { mutableStateOf("") }
-    var selectedGenreId by remember { mutableIntStateOf(-1) }
-    var searchResults by remember { mutableStateOf<List<Movie>>(emptyList()) }
     var isLoading by remember { mutableStateOf(false) }
-    var hasSearched by remember { mutableStateOf(false) }
 
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
@@ -99,14 +105,14 @@ fun SearchScreen(
         debounceJob?.cancel()
         debounceJob = scope.launch {
             if (text.isBlank() && genreId == -1) {
-                searchResults = emptyList()
-                hasSearched = false
+                onSearchResultsChange(emptyList())
+                onHasSearchedChange(false)
                 isLoading = false
                 return@launch
             }
 
             isLoading = true
-            hasSearched = true
+            onHasSearchedChange(true)
 
             val res = if (text.isNotBlank()) {
                 TmdbApiClient.searchMovies(text)
@@ -114,8 +120,15 @@ fun SearchScreen(
                 TmdbApiClient.getMoviesByGenre(genreId)
             }
 
-            searchResults = res.getOrDefault(emptyList())
+            onSearchResultsChange(res.getOrDefault(emptyList()))
             isLoading = false
+        }
+    }
+
+    // Auto restore results if query or genre exists but results were cleared
+    LaunchedEffect(query, selectedGenreId) {
+        if ((query.isNotBlank() || selectedGenreId != -1) && searchResults.isEmpty() && !isLoading) {
+            performSearch(query, selectedGenreId)
         }
     }
 
@@ -123,14 +136,14 @@ fun SearchScreen(
         modifier = modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(top = 16.dp)
+            .padding(top = if (isLandscape) 8.dp else 16.dp)
     ) {
         // Search Input Bar
         OutlinedTextField(
             value = query,
             onValueChange = { newText ->
-                query = newText
-                selectedGenreId = -1
+                onQueryChange(newText)
+                onGenreSelect(-1)
                 debounceJob?.cancel()
                 debounceJob = scope.launch {
                     delay(500)
@@ -157,9 +170,10 @@ fun SearchScreen(
             trailingIcon = {
                 if (query.isNotEmpty()) {
                     IconButton(onClick = {
-                        query = ""
-                        searchResults = emptyList()
-                        hasSearched = false
+                        onQueryChange("")
+                        onGenreSelect(-1)
+                        onSearchResultsChange(emptyList())
+                        onHasSearchedChange(false)
                     }) {
                         Icon(
                             imageVector = Icons.Default.Close,
@@ -203,12 +217,12 @@ fun SearchScreen(
                     selected = isSelected,
                     onClick = {
                         if (isSelected) {
-                            selectedGenreId = -1
-                            searchResults = emptyList()
-                            hasSearched = false
+                            onGenreSelect(-1)
+                            onSearchResultsChange(emptyList())
+                            onHasSearchedChange(false)
                         } else {
-                            selectedGenreId = genre.id
-                            query = ""
+                            onGenreSelect(genre.id)
+                            onQueryChange("")
                             focusManager.clearFocus()
                             performSearch("", genre.id)
                         }
@@ -251,8 +265,10 @@ fun SearchScreen(
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = if (isLandscape) 8.dp else 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Text(
                         text = stringResource(R.string.no_results_title),
@@ -260,7 +276,7 @@ fun SearchScreen(
                         fontSize = 16.sp,
                         fontWeight = FontWeight.Bold
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.no_results_desc),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -272,12 +288,14 @@ fun SearchScreen(
                 Column(
                     modifier = Modifier
                         .align(Alignment.Center)
-                        .padding(24.dp),
-                    horizontalAlignment = Alignment.CenterHorizontally
+                        .verticalScroll(rememberScrollState())
+                        .padding(horizontal = 24.dp, vertical = if (isLandscape) 6.dp else 24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
                 ) {
                     Box(
                         modifier = Modifier
-                            .size(70.dp)
+                            .size(if (isLandscape) 46.dp else 70.dp)
                             .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                         contentAlignment = Alignment.Center
                     ) {
@@ -285,22 +303,24 @@ fun SearchScreen(
                             imageVector = Icons.Default.Search,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(36.dp)
+                            modifier = Modifier.size(if (isLandscape) 24.dp else 36.dp)
                         )
                     }
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(if (isLandscape) 8.dp else 16.dp))
                     Text(
                         text = stringResource(R.string.search_empty_title),
                         color = MaterialTheme.colorScheme.onBackground,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold
+                        fontSize = if (isLandscape) 15.sp else 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        textAlign = TextAlign.Center
                     )
-                    Spacer(modifier = Modifier.height(6.dp))
+                    Spacer(modifier = Modifier.height(4.dp))
                     Text(
                         text = stringResource(R.string.search_empty_desc),
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        fontSize = 13.sp,
-                        textAlign = TextAlign.Center
+                        fontSize = if (isLandscape) 12.sp else 13.sp,
+                        textAlign = TextAlign.Center,
+                        lineHeight = if (isLandscape) 16.sp else 18.sp
                     )
                 }
             } else {

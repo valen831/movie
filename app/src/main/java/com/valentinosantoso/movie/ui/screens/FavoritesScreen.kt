@@ -2,6 +2,8 @@ package com.valentinosantoso.movie.ui.screens
 
 import android.content.res.Configuration
 import androidx.compose.foundation.background
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,13 +91,14 @@ fun FavoritesScreen(
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(32.dp),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = 24.dp, vertical = if (isLandscape) 12.dp else 32.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
                 Box(
                     modifier = Modifier
-                        .size(80.dp)
+                        .size(if (isLandscape) 52.dp else 80.dp)
                         .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
@@ -103,25 +106,25 @@ fun FavoritesScreen(
                         imageVector = Icons.Default.Favorite,
                         contentDescription = null,
                         tint = PrimaryRed.copy(alpha = 0.8f),
-                        modifier = Modifier.size(40.dp)
+                        modifier = Modifier.size(if (isLandscape) 28.dp else 40.dp)
                     )
                 }
-                Spacer(modifier = Modifier.height(16.dp))
+                Spacer(modifier = Modifier.height(if (isLandscape) 8.dp else 16.dp))
                 Text(
                     text = stringResource(R.string.favorites_empty_title),
                     color = MaterialTheme.colorScheme.onBackground,
-                    fontSize = 18.sp,
+                    fontSize = if (isLandscape) 16.sp else 18.sp,
                     fontWeight = FontWeight.Bold
                 )
-                Spacer(modifier = Modifier.height(8.dp))
+                Spacer(modifier = Modifier.height(if (isLandscape) 4.dp else 8.dp))
                 Text(
                     text = stringResource(R.string.favorites_empty_desc),
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    fontSize = 13.sp,
+                    fontSize = if (isLandscape) 12.sp else 13.sp,
                     textAlign = TextAlign.Center,
-                    lineHeight = 18.sp
+                    lineHeight = if (isLandscape) 16.sp else 18.sp
                 )
-                Spacer(modifier = Modifier.height(24.dp))
+                Spacer(modifier = Modifier.height(if (isLandscape) 12.dp else 24.dp))
                 Button(
                     onClick = onExploreClick,
                     colors = ButtonDefaults.buttonColors(containerColor = PrimaryRed),
